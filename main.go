@@ -47,7 +47,7 @@ func main() {
 
 	//Start prompts
 	fmt.Println("Welcome to the " + planets.Name + "!")
-	fmt.Println("There are 9 planets to explore.")
+	fmt.Println("There are " + strconv.Itoa(len(planets.Planets)) + " planets to explore.")
 	fmt.Println("What is your name?")
 
 	//Read name
