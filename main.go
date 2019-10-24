@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-type Planets struct {
+type SolarSystem struct {
 	Name string `json:"name"`
     Planets []Planet `json:"planets"`
 }
@@ -20,6 +20,80 @@ type Planets struct {
 type Planet struct {
     Name   string `json:"name"`
     Description   string `json:"description"`
+}
+
+/*func parseJson(jsonFile var, planets var){
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	json.Unmarshal(byteValue, planets)
+}*/
+
+func initialPrompts(solarSystem *SolarSystem) {
+	fmt.Println("Welcome to the " + (*solarSystem).Name + "!")
+	fmt.Println("There are " + strconv.Itoa(len((*solarSystem).Planets)) + " planets to explore.")
+	fmt.Println("What is your name?")
+}
+
+func readEchoName(reader *bufio.Reader) {
+	//Read name
+	name, _ := reader.ReadString('\n')
+	name = strings.Replace(name, "\n", "", -1)
+
+	//Echo name
+	fmt.Println("Nice to meet you,", name + ". My name is Eliza, I'm an old friend of Alexa.")
+	fmt.Println("Let's go on an adventure!")
+}
+
+func validateResponse(reader *bufio.Reader, response *string){
+	if *response == "N" || *response == "Y"{ 
+		return
+	}
+
+	fmt.Println("Sorry, I didn't get that.")
+	fmt.Println("Shall I randomly choose a planet for you to visit? (Y or N)")
+    *response, _ = reader.ReadString('\n')
+	*response = strings.Replace(*response, "\n", "", -1)
+	validateResponse(reader, response)
+}
+
+func choosePlanet(reader *bufio.Reader, solarSystem *SolarSystem) (planet Planet){
+	
+	var planetName string
+
+	//for loop to ensure entering correct planet name
+	for {
+
+		//Ask for planet name
+		fmt.Println("Name the planet you would like to visit.")
+		planetName, _ = reader.ReadString('\n')
+		planetName = strings.Replace(planetName, "\n", "", -1)
+
+		//Get planet description
+		for i := 0; i < len((*solarSystem).Planets); i++ {
+			if planetName == (*solarSystem).Planets[i].Name {
+				planet = (*solarSystem).Planets[i]
+			}
+		}
+	
+		//Make sure description was found and entered correct planet name
+		if len(planet.Description) > 0 {
+			break
+		} else {
+
+			//Loop (ie. don't break) if correct planet if not entered
+			fmt.Println("Sorry, " + planetName + " is not one of the planets in the " + (*solarSystem).Name + ".")
+		
+		}
+	}
+
+	return
+}
+
+func selectRandPlanet(solarSystem *SolarSystem) (planet Planet){
+	//select random planet
+	fmt.Println("Selecting a random planet...")
+	rand.Seed(time.Now().Unix()) // initialize global pseudo random generator
+	planet = (*solarSystem).Planets[rand.Intn(len((*solarSystem).Planets))]
+	return
 }
 
 func main() {
@@ -41,92 +115,37 @@ func main() {
 
 	//Close and parse json
 	defer jsonFile.Close()
+	var solarSystem SolarSystem
+	//parseJson(&jsonFile, &planets)
 	byteValue, _ := ioutil.ReadAll(jsonFile)
-	var planets Planets
-	json.Unmarshal(byteValue, &planets)
+	json.Unmarshal(byteValue, &solarSystem)
 
-	//Start prompts
-	fmt.Println("Welcome to the " + planets.Name + "!")
-	fmt.Println("There are " + strconv.Itoa(len(planets.Planets)) + " planets to explore.")
-	fmt.Println("What is your name?")
+	//Initial prompts
+	initialPrompts(&solarSystem)
 
-	//Read name
+	//Create reader
 	reader := bufio.NewReader(os.Stdin)
-    name, _ := reader.ReadString('\n')
-	name = strings.Replace(name, "\n", "", -1)
 
-	//Echo name
-	fmt.Println("Nice to meet you,", name + ". My name is Eliza, I'm an old friend of Alexa.")
-	fmt.Println("Let's go on an adventure!")
+	//Read name and echo name
+	readEchoName(reader)
 
-	//Set planet variables
-	var planet string
-	var description string
+	//Ask if selecting rand value
+	fmt.Println("Shall I randomly choose a planet for you to visit? (Y or N)")
+	response, _ := reader.ReadString('\n')
+	response = strings.Replace(response, "\n", "", -1)
+	validateResponse(reader, &response)
 
-	//main for loop to get Yes or No value
-	for {
+	//Declare planet variable
+	var planet Planet
 
-		//Ask if selecting rand value
-		fmt.Println("Shall I randomly choose a planet for you to visit? (Y or N)")
-    	yesno, _ := reader.ReadString('\n')
-		yesno = strings.Replace(yesno, "\n", "", -1)
-
-		if yesno == "N" {
-
-			//for loop to ensure entering correct planet name
-			for {
-
-				//Ask for planet name
-				fmt.Println("Name the planet you would like to visit.")
-				planet, _ = reader.ReadString('\n')
-				planet = strings.Replace(planet, "\n", "", -1)
-
-				//Get planet description
-				for i := 0; i < len(planets.Planets); i++ {
-					if planet == planets.Planets[i].Name {
-						description = planets.Planets[i].Description
-					}
-				}
-			
-				//Make sure description was found and entered correct planet name
-				if len(description) > 0 {
-
-					//print planet name and description
-					fmt.Println("Traveling to " + planet + "...")
-					fmt.Println("Arived at " + planet + ". " + description)
-					break
-
-				} else {
-
-					//Loop (ie. don't break) if correct planet if not entered
-					fmt.Println("Sorry, " + planet + " is not one of the planets in the " + planets.Name + ".")
-				
-				}
-
-			}
-
-			break
-
-		} else if yesno == "Y" {
-
-			//select random planet
-			fmt.Println("Selecting a random planet...")
-			rand.Seed(time.Now().Unix()) // initialize global pseudo random generator
-			var randPlanet Planet
-			randPlanet = planets.Planets[rand.Intn(len(planets.Planets))]
-			planet = randPlanet.Name
-			description = randPlanet.Description
-
-			//Print name and description of selected planet
-			fmt.Println("Traveling to " + planet + "...")
-			fmt.Println("Arived at " + planet + ". " + description)
-			break
-
-		} else {
-
-			//Loop (ie. don't break) if Y or N was not entered
-			fmt.Println("Sorry, I didn't get that.")
-
-		}
+	//Select planet
+	if response == "N"{
+		planet = choosePlanet(reader, &solarSystem)
+	} else {
+		planet = selectRandPlanet(&solarSystem)
 	}
+
+	//Print name and description of selected planet
+	fmt.Println("Traveling to " + planet.Name + "...")
+	fmt.Println("Arived at " + planet.Name + ". " + planet.Description)
 }
