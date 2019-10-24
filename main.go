@@ -43,15 +43,19 @@ func readEchoName(reader *bufio.Reader) {
 	fmt.Println("Let's go on an adventure!")
 }
 
+func askIfRandom(reader *bufio.Reader, response *string){
+	fmt.Println("Shall I randomly choose a planet for you to visit? (Y or N)")
+	*response, _ = reader.ReadString('\n')
+	*response = strings.Replace(*response, "\n", "", -1)
+}
+
 func validateResponse(reader *bufio.Reader, response *string){
 	if *response == "N" || *response == "Y"{ 
 		return
 	}
 
 	fmt.Println("Sorry, I didn't get that.")
-	fmt.Println("Shall I randomly choose a planet for you to visit? (Y or N)")
-    *response, _ = reader.ReadString('\n')
-	*response = strings.Replace(*response, "\n", "", -1)
+	askIfRandom(reader, response)
 	validateResponse(reader, response)
 }
 
@@ -120,19 +124,16 @@ func main() {
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	json.Unmarshal(byteValue, &solarSystem)
 
-	//Initial prompts
-	initialPrompts(&solarSystem)
-
 	//Create reader
 	reader := bufio.NewReader(os.Stdin)
 
-	//Read name and echo name
+	//Initial prompts
+	initialPrompts(&solarSystem)
 	readEchoName(reader)
 
 	//Ask if selecting rand value
-	fmt.Println("Shall I randomly choose a planet for you to visit? (Y or N)")
-	response, _ := reader.ReadString('\n')
-	response = strings.Replace(response, "\n", "", -1)
+	var response string
+	askIfRandom(reader, &response)
 	validateResponse(reader, &response)
 
 	//Declare planet variable
